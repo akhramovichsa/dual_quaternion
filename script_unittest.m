@@ -1,3 +1,5 @@
+clc; clear all;
+
 tolerance = 0.00000000001;
 
 % check: dq_from_euler_translation. angle -> quaternion
@@ -24,9 +26,9 @@ assert(all(angle - rad2deg([angle_gamma, angle_psi, angle_theta]) < tolerance), 
 % check dq_conj
 display('CHECK: dq_conj');
 dq = dq_from_euler_translation([0 0 0], [10 20 30]);
-dq_conj = dq_conj(dq);
+dq_conjug = dq_conj(dq);
 
-assert(all(dq_get_translation_vector(dq) == -dq_get_translation_vector(dq_conj)), 'FAILED: dq_conj');
+assert(all(dq_get_translation_vector(dq) == -dq_get_translation_vector(dq_conjug)), 'FAILED: dq_conj');
 
 %check: dq_multiply
 display('CHECK: dq_multiply');
@@ -39,11 +41,11 @@ translation_2 = [10 0 0];
 dq1 = dq_from_euler_translation(angle_1, translation_1);
 dq2 = dq_from_euler_translation(angle_2, translation_2);
 
-dq_mul = dq_multiply(dq1, dq2);
+dq_mul = dq_multiply(dq1, dq2)
 
-tr = dq_get_translation_vector(dq_mul);
+tr = dq_get_translation_vector(dq_mul)
 [r1, r2, r3] = dq_get_rotation_euler(dq_mul);
-rad2deg([r1, r2, r3]);
+rad2deg([r1, r2, r3])
 
 %check: dq_normalize ???????????
 display('CHECK: dq_normalize');

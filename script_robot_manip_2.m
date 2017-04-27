@@ -42,14 +42,10 @@ while i < i_max
     % ---------------------------------------------------------------------
     % Спуск по первой координате в положительном направлении: q0*q_h_z*q1*q2
     % ---------------------------------------------------------------------
-    q_cur_1_plus = dq_multiply(q0, q_h_z);
-    q_cur_1_plus = dq_multiply(q_cur_1_plus, q1);
-    q_cur_1_plus = dq_multiply(q_cur_1_plus, q2);
+    q_cur_1_plus = dq_multiply(q0, q_h_z, q1, q2);
     
     % Спуск по первой координате в отрицательном направлении
-    q_cur_1_minus = dq_multiply(q0, dq_conj(q_h_z));
-    q_cur_1_minus = dq_multiply(q_cur_1_minus, q1);
-    q_cur_1_minus = dq_multiply(q_cur_1_minus, q2);
+    q_cur_1_minus = dq_multiply(q0, dq_conj(q_h_z), q1, q2);
     
     % [angle_gamma, angle_psi, angle_theta] = dq_get_rotation_euler(q_cur_1_plus);
     % dq_get_translation_vector(q_cur_1_plus);
@@ -77,14 +73,10 @@ while i < i_max
     % ---------------------------------------------------------------------
     % Спуск по второй координате в положительном направлении: q0*q1*q_h_z*q2
     % ---------------------------------------------------------------------
-    q_cur_2_plus = dq_multiply(q0, q1);
-    q_cur_2_plus = dq_multiply(q_cur_2_plus, q_h_z);
-    q_cur_2_plus = dq_multiply(q_cur_2_plus, q2);
+    q_cur_2_plus = dq_multiply(q0, q1, q_h_z, q2);
     
     % Спуск по первой координате в отрицательном направлении
-    q_cur_2_minus = dq_multiply(q0, q1);
-    q_cur_2_minus = dq_multiply(q_cur_2_minus, dq_conj(q_h_z));
-    q_cur_2_minus = dq_multiply(q_cur_2_minus, q2);
+    q_cur_2_minus = dq_multiply(q0, q1, dq_conj(q_h_z), q2);
     
     % [angle_gamma, angle_psi, angle_theta] = dq_get_rotation_euler(q_cur_1_plus);
     % dq_get_translation_vector(q_cur_1_plus);
@@ -127,13 +119,12 @@ while i < i_max
     plot(q_plot_xyz_2(1), q_plot_xyz_2(2), 's');
     line([q_plot_xyz_1(1) q_plot_xyz_2(1)], [q_plot_xyz_1(2) q_plot_xyz_2(2)]);
     
-    pause(0.01)
+    pause(0.01);
     
     % ---------------------------------------------------------------------
     % Глобальное сравнение достижения финишной точки
     % ---------------------------------------------------------------------
-    q_current = dq_multiply(q0, q1);
-    q_current = dq_multiply(q_current, q2);
+    q_current = dq_multiply(q0, q1, q2);
     q_delta_global = dq_multiply(dq_conj(q_current), q_finish);
     
     if (norm(dq_get_translation_vector(q_delta_global)) < eps)
