@@ -1,2 +1,2 @@
-# dual_quaterion
+# dual_quaternion
 Dual Quaternion
