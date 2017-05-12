@@ -14,8 +14,7 @@ q2 = dq_from_euler_translation(deg2rad([0, 0, 0]), [1 0 0])
 
 
 % Начальное положение: q0*q1*q2
-q_start = dq_multiply(q0, q1);
-q_start = dq_multiply(q_start, q2)
+q_start = dq_multiply(q0, q1, q2);
 
 [angle_gamma, angle_psi, angle_theta] = dq_get_rotation_euler(q_start)
 dq_get_translation_vector(q_start)
@@ -133,5 +132,5 @@ while i < i_max
     
     i = i + 1;
     
-    [i norm(dq_get_translation_vector(q_delta_global))]
+    [i norm(dq_get_translation_vector(q_delta_global))];
 end
