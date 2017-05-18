@@ -153,7 +153,7 @@ dq_pssk_ssk = dq_from_euler_translation(deg2rad([0 betta alpha]), r);
 % -------------------------------------------------------------------------
 engine_thrust =  8.0; % 1000*(0 - theta) % + 0.5*(100 - r(2));
 
-engine_thrust = 1.5*(18 - V(1)) + 10 *(0 - theta);
+engine_thrust = 2.5*(18 - V(1)) + 10 *(0 - theta);
 % engine_thrust = 0.8*(100 - r(2)); % + 10 *(0 - theta);
 if (engine_thrust < 0) engine_thrust = 0; end;
 if (engine_thrust > 40) engine_thrust = 40; end;
@@ -169,7 +169,7 @@ if (engine_thrust > 40) engine_thrust = 40; end;
 Rp = [0.0 -0.2 0.0];       % точка приложения силы в ССК
 Fp = [engine_thrust 0 0]; % сила ССК
 Mp = cross(Rp, Fp);       % момент в ССК
-
+      
 % -------------------------------------------------------------------------
 % Сумма моментов и сил в бикватернионной форме
 % -------------------------------------------------------------------------
@@ -196,6 +196,7 @@ disp([num2str(t, '%10.2f:'), char(9), ...
       'H:',     char(9), num2str(r(2), '%10.2f'), char(9), char(9), ...
       'engine:',char(9), num2str(engine_thrust, '%10.2f'), char(9), char(9)] ...
   );
+
 
 % -------------------------------------------------------------------------
 % Тензор инерции
