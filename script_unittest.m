@@ -6,10 +6,10 @@ tolerance = 0.00000000001;
 display('CHECK: dq_from_euler_translation');
 angle       = deg2rad([60, 60, 60]);
 translation = [10.0 20.0 30.0];
-q = angle2quat(angle(1), angle(2), angle(3), 'xyz');
+q = angle2quat(angle(1), angle(2), angle(3), 'yzx');
 dq = dq_from_euler_translation(angle, translation);
 
-assert(all(q == dq(1:4)), 'FAILED: dq_from_euler_translation')
+assert(all(q - dq(1:4) < tolerance), 'FAILED: dq_from_euler_translation')
 
 % check: dq_get_translation_vector
 display('CHECK: dq_get_translation_vector');
@@ -29,6 +29,14 @@ dq = dq_from_euler_translation([0 0 0], [10 20 30]);
 dq_conjug = dq_conj(dq);
 
 assert(all(dq_get_translation_vector(dq) == -dq_get_translation_vector(dq_conjug)), 'FAILED: dq_conj');
+
+%check: dq_inv
+display('CHECK: dq_inv');
+dq = dq_from_euler_translation(deg2rad([0 0 0]), [10 20 30])
+dq_invert = dq_inv(dq)
+dq_ones = dq_multiply(dq, dq_invert)
+
+assert(all(dq_ones(2:8) < tolerance) && dq_ones(1) == 1, 'FAILED: dq_inv')
 
 %check: dq_multiply
 display('CHECK: dq_multiply');
