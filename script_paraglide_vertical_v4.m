@@ -1,8 +1,8 @@
-function script_paraglide_vertical_v2()
+function script_paraglide_vertical_v4()
 clc; clear all;
 
-dual_omega = [0 deg2rad(0) deg2rad(0) deg2rad(0)  0 5 0 0];
-dual_q     = dq_from_euler_translation(deg2rad([0 0 0]), [0 100 0]);
+dual_omega = [0 deg2rad(0) deg2rad(0) deg2rad(0)  0 10 0 0];        % Начальная скорость
+dual_q     = dq_from_euler_translation(deg2rad([0 0 10]), [0 10 0]); % Начальное положение
 
 options = odeset('RelTol',2e-2);
 [t, x] = ode113(@dx_dt, [0:0.5:40], [dual_omega, dual_q], options);
@@ -11,8 +11,8 @@ dq = x(:, 9:16);
 figure(1)
 clf
 x_max = 550;
-y_max = 150;
-% axis([0 x_max -0 y_max])
+y_max = 130;
+% axis([0 x_max -30 y_max])
 hold on
 grid on
 for i = 1:1:length(dq)
@@ -51,7 +51,7 @@ omega = dual_omega(2:4); % Угловая скорость, [рад/с]
 V     = dual_omega(6:8); % Линейная скорость, [м/с]
 
 [gamma psi theta] = dq_get_rotation_euler(dual_q);     % Углы ориентации, [рад]
-r                 = dq_get_translation_vector(dual_q); % Радиу-вектор положения ЛА, [м]
+r                 = dq_get_translation_vector(dual_q); % Радиус-вектор положения ЛА, [м]
 
 alpha = atan(-V(2)/V(1));                 % Угол атаки, [рад]
 betta = atan(V(3)/sqrt(V(1)^2 + V(2)^2)); % Угол скольжения, [рад]
@@ -77,8 +77,7 @@ Rg_wing     = [0 3 0];                                  % точка приложения силы 
 Fg_wing_nsk = [0 -mass_wing*g 0];                       % сила тяжести в НСК
 % Fg_wing     = dq_transform_vector(Fg_wing_nsk, dq_conj(dual_q)); % сила тяжести в ССК
 Fg_wing     = Fg_wing_nsk*nsk2ssk(gamma, psi, theta);
-
-Mg_wing     = cross(Rg_wing, Fg_wing);                  % момент в ССК
+% Mg_wing     = cross(Rg_wing, Fg_wing);                  % момент в ССК
 
 % -------------------------------------------------------------------------
 % Сила и момент силы тяжести полезного груза
@@ -88,42 +87,23 @@ Rg_payload     = [0 -0.5 0];                                   % точка приложени
 Fg_payload_nsk = [0 -mass_payload*g 0];                       % сила тяжести в НСК
 % Fg_payload     = dq_transform_vector(Fg_payload_nsk, dq_conj(dual_q)); % сила тяжести в ССК
 Fg_payload     = Fg_payload_nsk*nsk2ssk(gamma, psi, theta);
-
-Mg_payload     = cross(Rg_payload, Fg_payload);               % момент в ССК
+% Mg_payload     = cross(Rg_payload, Fg_payload);               % момент в ССК
 
 % -------------------------------------------------------------------------
 % Аэродинамическая сила и момент аэродинамической силы крыла 
 % Внимание! Задются в ПССК, затем надо перевести в ССК
 % -------------------------------------------------------------------------
-% ClarkY
-% alpha_interp = deg2rad([-6.0;    -4.5;    -3.0;    -1.5;     0.0;     1.5;     3.0;     6.0;     9.0;     12.0;     15.0;     18.0;     21.0]);
-% Cx_interp    =         [ 0.0108;  0.0107;  0.0119;  0.0139;  0.0172;  0.0228;  0.0288;  0.0464;  0.0700;   0.0985;   0.1272;   0.2108;   0.2946];
-% Cy_interp    =         [-0.0600;  0.0450;  0.1670;  0.2680;  0.3840;  0.5010;  0.6020;  0.8190;  1.0340;   1.2310;   1.3670;   1.2830;   1.0810];
-% Cm_z_interp  =         [ 0.0680;  0.0913;  0.1197;  0.1368;  0.1660;  0.2050;  0.2230;  0.2830;  0.3130;   0.3440;   0.4190;   0.3770;   0.3180];
-
-% ClarkY see http://airfoiltools.com/airfoil/details?airfoil=clarkyh-il#polars
-alpha_interp = deg2rad([-60.0;     -17.5;    -15.0;    -10.0;    -5.0;     0.0;      5.0;     10.0;     15.0;     17.5;   60.0]);
-Cm_z_0       = 0.0;
-Cm_z_alpha   = 0.0;
-Cx_interp    =         [  0.035;     0.035;    0.025;    0.02;    0.015;   0.01;     0.015;    0.02;     0.05;     0.1;    0.1];
-Cy_interp    =         [ -1.15;     -1.15;    -1.2;     -0.8;    -0.3;     0.25;     0.8;      1.2;      1.2;      1.15;   1.0];
-Cm_z_interp  =         [ -0.06;     -0.06;    -0.05;    -0.03;   -0.02;   -0.015;   -0.025;   -0.015;   -0.002;   -0.015; -0.015];
-Cd_interp    =         [  0.7;       0.7;      0.7;      0.7;     0.7;     0.432;    0.37;     0.32;     0.3;      0.3;    0.5];
-
 % XFLR5 всего параплана
 alpha_interp = deg2rad([-20.0;     -10.0;    -5.0;    0.0;    5.0;     10.0;      20.0]);
 Cx_interp    =         [  0.1;       0.04;    0.02;   0.015;  0.03;     0.06;     0.14];
 Cy_interp    =         [ -0.9;      -0.4;    -0.15;   0.13;   0.4;      0.7;      1.2];
-Cm_z_interp  =         [ -1.1;      -0.3;    -0.05;   0.05;   0.07;    -0.03;    -0.6] - 0.08;
+Cm_z_interp  =         [ -1.1;      -0.3;    -0.05;   0.05;   0.07;    -0.03;    -0.6]; % - 0.08;
 Cd_interp    =         [  0.32;      0.19;     0.1;   0.35;   0.29;     0.24;     0.32];
 
-
-Cm_z_0=       -0.052;
-Cm_z_alpha=     -2.6;
-Cx = interp1(alpha_interp, Cx_interp, alpha, 'linear', 'extrap'); % Коэффициент силы сопротивления силы, зависит от угла атаки
-Cy = interp1(alpha_interp, Cy_interp, alpha, 'linear', 'extrap'); % Коэффициент подъемной силы, зависит от угла атаки
-Cz = 0.0;                                                         % Коэффициент боковой силы, зависит от угла атаки и скольжения
-Mz = interp1(alpha_interp, Cm_z_interp, alpha, 'linear', 'extrap')*alpha; % (Cm_z_0 + Cm_z_alpha*alpha);
+Cx = interp1(alpha_interp, Cx_interp, alpha, 'linear', 'extrap');   % Коэффициент силы сопротивления силы, зависит от угла атаки
+Cy = interp1(alpha_interp, Cy_interp, alpha, 'linear', 'extrap');   % Коэффициент подъемной силы, зависит от угла атаки
+Cz = 0.0;                                                           % Коэффициент боковой силы, зависит от угла атаки и скольжения
+Mz = interp1(alpha_interp, Cm_z_interp, alpha, 'linear', 'extrap'); % (Cm_z_0 + Cm_z_alpha*alpha);
 Cd = interp1(alpha_interp, Cd_interp,   alpha, 'linear', 'extrap'); % Центр давления от передней кромки крыла
 
 Ra_wing     = [-0.35-Cd 3 0]; % точка приложения силы в ССК, зависит от угла атаки
@@ -151,52 +131,39 @@ dq_pssk_ssk = dq_from_euler_translation(deg2rad([0 betta alpha]), r);
 % -------------------------------------------------------------------------
 %  Сила и момент двигателя тяги
 % -------------------------------------------------------------------------
-engine_thrust =  8.0; % 1000*(0 - theta) % + 0.5*(100 - r(2));
+Rp      = [-0.1 -0.2 0.0];       % точка приложения силы в ССК
+Rp_matr = [0 -Rp(3) Rp(2); Rp(3) 0 -Rp(1); -Rp(2) Rp(1) 0]; % Точка приложения силы в матричном виде для векторного умножения
 
-engine_thrust = 2.5*(18 - V(1)) + 10 *(0 - theta);
-% engine_thrust = 0.8*(100 - r(2)); % + 10 *(0 - theta);
-if (engine_thrust < 0) engine_thrust = 0; end;
-if (engine_thrust > 40) engine_thrust = 40; end;
-engine_thrust = 0;
-% if (theta <= deg2rad(0.1))
-%     engine_thrust = 0.3;
-% end
+engine_thrust =  0.0; % 1000*(0 - theta) % + 0.5*(100 - r(2));
 
-% if (theta > deg2rad(2))
-%     engine_thrust = 0.0;
-% end
+% Стабилизация по высоте и скорости
+k1 =  [1 0 0; 0 1 0; 0 0 1]*0.2;
+k2 =  [1 0 0; 0 1 0; 0 0 1]*0.2;
+Fp = mass*(-(r - [r(1) 20 0])*(eye(3) + k1*k2) ...
+           -(V - [V(1) 0 0])*(k1 + k2) ...
+           -(1/mass)*(Fg_wing + Fg_payload + Fa) + cross(omega, V) );
+       
+% Стабилизация по углу тангажа и угловой скорости
+J = [25 0 0; 0 1 0; 0 0 25];
 
-Rp = [0.0 -0.2 0.0];       % точка приложения силы в ССК
+Mp = J*(-([gamma psi theta]*(eye(3) + k1*k2))' ...
+        -(omega*(k1 + k2))' ...
+        -inv(J)*(Ma') + inv(J)*cross(omega', J*omega') );
+Rp_matr;
+Fp = (Rp_matr')*Mp;
+Mp = Mp';
+Fp = [-Mp(3)/Rp(2) 0 0];
+
+
+P_MAX = 40;
+if (Fp(1) < 0) Fp(1) = 0; end;
+if (Fp(1) > P_MAX) Fp(1) = P_MAX; end;
+if (Fp(2) < 0) Fp(2) = 0; end;
+if (Fp(2) > P_MAX) Fp(2) = P_MAX; end;
+
+
 Fp = [engine_thrust 0 0]; % сила ССК
 Mp = cross(Rp, Fp);       % момент в ССК
-      
-% -------------------------------------------------------------------------
-% Сумма моментов и сил в бикватернионной форме
-% -------------------------------------------------------------------------
-F = [0 0 0];
-F = F + Fg_wing;
-F = F + Fg_payload;
-F = F + Fa;
-F = F + Fp;
-
-M = [0 0 0];
-% M = M + Mg_wing;
-% M = M + Mg_payload;
-M = M + Ma;
-M = M + Mp;
-
-dual_F = [0 M 0 F];
-
-disp([num2str(t, '%10.2f:'), char(9), ...
-      'alpha:', char(9), num2str(rad2deg(alpha), '%10.2f'), char(9), ...
-      'theta:', char(9), num2str(rad2deg(theta), '%10.2f'), char(9), ...
-      'F:',     char(9), num2str(F(1:2), '%10.2f'), char(9), ...
-      'Ma_z:',  char(9), num2str(M(3), '%10.2f'), char(9), char(9), ...
-      'V:',     char(9), num2str(V(1:2), '%10.2f'), char(9), ...
-      'H:',     char(9), num2str(r(2), '%10.2f'), char(9), char(9), ...
-      'engine:',char(9), num2str(engine_thrust, '%10.2f'), char(9), char(9)] ...
-  );
-
 
 % -------------------------------------------------------------------------
 % Тензор инерции
@@ -213,15 +180,39 @@ mq = [1   0    0    0;
 dual_J = [  Jq       zeros(4); 
           zeros(4)     mq];
 
-  
+% -------------------------------------------------------------------------
+% Сумма моментов и сил в бикватернионной форме
+% -------------------------------------------------------------------------
+F = [0 0 0];
+F = F + Fg_wing;
+F = F + Fg_payload;
+F = F + Fa;
+F = F + Fp;
+
+M = [0 0 0];
+% M = M + Mg_wing;
+% M = M + Mg_payload;
+M = M + Ma;
+M = M + Mp;
+
+% Неуправляемые моменты и силы в бикватернионах
+dual_F = [0 M 0 F];
+
+disp([num2str(t, '%10.2f:'), char(9), ...
+      'alpha:', char(9), num2str(rad2deg(alpha), '%10.2f'), char(9), ...
+      'theta:', char(9), num2str(rad2deg(theta), '%10.2f'), char(9), ...
+      'F:',     char(9), num2str(F(1:2), '%10.2f'), char(9), ...
+      'M_z:',   char(9), num2str(M(3), '%10.2f'), char(9), char(9), ...
+      'V:',     char(9), num2str(V(1:2), '%10.2f'), char(9), ...
+      'H:',     char(9), num2str(r(2), '%10.2f'), char(9), char(9), ...
+      'engine:',char(9), num2str(Fp(1:2), '%10.2f'), char(9), char(9)] ...
+  );
+
 % -------------------------------------------------------------------------
 % Динамические уравнения движения в бикватернионах
 % -------------------------------------------------------------------------
 d_dual_omega_dt = dual_J\dual_F' - dual_J\dq_cross([dual_omega(1:4) 0 0 0 0], (dual_J*dual_omega')')'; 
 d_dual_q_dt     = 0.5*dq_multiply(dual_q, dual_omega);
-
-% if (abs(rad2deg(alpha)) > 15) return; end;
-% if (abs(rad2deg(theta)) > 40) return; end;
 
 dx_dt = [d_dual_omega_dt; d_dual_q_dt'];
 
