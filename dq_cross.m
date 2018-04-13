@@ -1,4 +1,4 @@
-function dq_out = dq_cross(dq1, dq2)
+function dq_out = dq_cross(dq1, dq2, varargin)
 %dualquat_cross Dual quaternion cross product
 
 % dq_out = 0.5 * (dualquat_multiply(dq1, dq2) + dualquat_multiply(dq2, dq1))
@@ -10,6 +10,17 @@ q2_real = dq_get_real(dq2);
 q2_dual = dq_get_dual(dq2);
 
 dq_out = [quatcross(q1_real, q2_real), quatcross(q1_real, q2_dual) + quatcross(q1_dual, q2_real)];
+
+% next arguments
+nVarargs = length(varargin);
+for k = 1:nVarargs
+    q1_real = dq_get_real(dq_out);
+    q1_dual = dq_get_dual(dq_out);
+    q2_real = dq_get_real(varargin{k});
+    q2_dual = dq_get_dual(varargin{k});
+    
+    dq_out = [quatcross(q1_real, q2_real), quatcross(q1_real, q2_dual) + quatcross(q1_dual, q2_real)];
+end
 
 % dq_out = [quatcross(q1_real, q2_real), quatcross(q1_real, q2_dual)];
 

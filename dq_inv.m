@@ -5,6 +5,7 @@ function dq_out = dq_inv(dq)
 
 q_real_norm = dq(1)^2 + dq(2)^2 + dq(3)^2 + dq(4)^2;
 
+% знак минус обязателен, см. литературу выше
 dq_norm_inv = [q_real_norm, ...
                - (dq(1)*dq(5) + dq(2)*dq(6) + dq(3)*dq(7) + dq(4)*dq(8))/q_real_norm];
 
