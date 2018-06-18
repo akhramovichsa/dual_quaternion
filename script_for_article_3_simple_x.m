@@ -1,4 +1,4 @@
-function script_for_article_3()
+function script_for_article_3_simple_x()
 clc; clear all;
 
 global gt gu gi;
@@ -7,32 +7,13 @@ global gt gu gi;
 % return;
 
 % Начальные условия полжения и ориентации ЛА
-rx      = 0;
-ry      = 0;
-rz      = 0;
-Vx      = 10;
-Vy      = 0;
-Vz      = 0;
+x1      = 0;
+x2      = 0;
 
-psi     = deg2rad(0);
-theta   = deg2rad(10);
-gamma   = deg2rad(0);
-omega_x = deg2rad(0);
-omega_y = deg2rad(0);
-omega_z = deg2rad(0);
-% u       = 0;
-
-
-% Перевод в бикватернионную форму
-dual_omega = [0 omega_x omega_y omega_z  0 Vx Vy Vz];                  % Начальная угловая и линейная скорости
-dual_q     = dq_from_euler_translation([psi theta gamma], [rx ry rz]); % Начальная ориентация и положение ЛА
 
 % Интегрирование системы
 options = odeset('RelTol',2e-2);
-[t, x] = ode45(@dx_dt, [0:0.5:50], [dual_omega, dual_q], options);
-
-d_omega = x(:, 1:8);
-d_q     = x(:, 9:16);
+[t, x] = ode45(@dx_dt, [0:0.5:50], [x1, x2], options);
 
 figure(1)
 % clf
@@ -45,7 +26,7 @@ grid on
 xlabel('\it r_x ,  м');
 ylabel('\it r_z ,  м');
 zlabel('\it r_y ,  м');
-for i = 1:1:length(d_q)
+for i = 1:1:length(x)
     r                 = dq_get_translation_vector(d_q(i,:)); % Положение центра масс
     rr(i, :) = r;
     [psi theta gamma] = dq_get_rotation_euler(d_q(i,:));     % Ориентация ЛА
@@ -231,26 +212,22 @@ dual_N = 0.01*[1 1 1 1  1 1 1 1]; % Коэффициент угловой скорости и линейной скор
 % dual_N = [0 0.001 0.001 0.001  0 0.001 0.001 0.001];
 % dual_N = dq_from_euler_translation(deg2rad([0 0 0]), [0 0 0]);
 
-r_tr = [r(1)+10 40 r(3)];
-% if (t >= 0 && t < 40)
-%     r_tr = [r(1) 40 r(3)];
-% end
-% 
-% if (t >= 40 && t < 80)
-%     r_tr = [r(1) 40 100];
-% end
-% 
-% if (t >= 80)
-%     r_tr = [r(1) 40 100];
-% end
+r_tr = [0 0 0];
+if (t >= 0 && t < 20)
+    r_tr = [r(1) r(2)+40 r(3)];
+end
 
-% if (t >= 90)
-%     r_tr = [0 40 0];
-% end
+if (t >= 20 && t < 40)
+    r_tr = [r(1) r(2)+40 r(3)+40];
+end
+
+if (t >= 40)
+    r_tr = [0 0 0];
+end
 
 dual_q_tr      = dq_from_euler_translation([psi theta gamma], r_tr);
 % dual_q_epsilon = dq_multiply(dual_q, dq_inv(dual_q_tr));
-dual_q_epsilon =  dual_q - dual_q_tr;
+dual_q_epsilon = dq_conj(dual_q_tr) - dq_conj(dual_q);
 
 
 % dual_omega_tr      = dq_from_euler_translation(deg2rad([0 0 0]), [V(1) 0 0]);
@@ -286,8 +263,8 @@ dual_omega_Kq = dual_omega_epsilon + dq_multiply(dual_K, dual_q_epsilon);
 %                   - dual_right_part )';
 
 % Классический рабочий регулятор с константами K и N: Fu = J*(-(1 + N*K)*q - (k*0.5*q + N)*omega - f)
-cK = 0.01;
-cN = 1.5;
+cK = 0.1;
+cN = 1.8;
 dual_I = [1 zeros(1,7)];
 % dual_Fu = dual_J*(- (1 + cN*cK)*dual_q_epsilon ...
 %                   - (cK + cN)*dual_omega_epsilon  ...
@@ -308,17 +285,13 @@ dual_I = [1 zeros(1,7)];
 %                   - dual_right_part )';
 
 % Управление из статьи, где функция ляпунова в виде модуля бикватерниона
-dual_qe = dq_multiply(dq_inv(dual_q_tr), dual_q);
-dual_qe = dq_cross(dq_inv(dual_q_tr), dual_q);
-dual_qe = dq_conj(dual_q_tr) - dq_conj(dual_q);
-
-dual_Fu = dual_J*(- (1 + cN*cK)*dq_multiply(dual_qe, dual_q) ...
+dual_Fu = dual_J*(- dq_multiply(dq_conj(dual_q_tr) - dq_conj(dual_q), dual_q) ...
                   - cN*dual_omega  ...
                   - dual_right_part )';
 
-% dual_Fu = dual_J*(- dq_multiply(dq_conj(dual_q_epsilon), dual_q) ...
-%                   - cN*dual_omega_epsilon - 0*cN*cK*dual_I ...
-%                   - dual_right_part )';
+dual_Fu = dual_J*(- dual_q_epsilon*dual_q' ...
+                  - cN*dual_omega - 0*cN*cK ...
+                  - dual_right_part )';
 
 % dual_Fu = - [0.0 0.1 0.1 0.1  0.0 0.1 0.1 0.1]'; % dq_multiply([0.3 0.3 0.3 0.3  0.1 0.1 0.1 0.1], dual_q_epsilon)'
 
@@ -339,26 +312,24 @@ dual_Fu = dual_J*(- (1 + cN*cK)*dq_multiply(dual_qe, dual_q) ...
 
 if ( ~isnan(dual_Fu(1)) )
 
-         dual_Fu = min(10, max(-10, dual_Fu));
-%          dual_Fu(6:8) = min(5, max(0, dual_Fu(6:8)));
+%         dual_Fu = min(5, max(0, dual_Fu));
+         dual_Fu(6:8) = min(5, max(0, dual_Fu(6:8)));
 
 %      dual_Fu(1:4) = min(20, max(-20, dual_Fu(1:4)));
 %      dual_Fu(5:8) = min(20, max(-20, dual_Fu(5:8)));
 %      dual_Fu(6) = min(4, max(0, dual_Fu(6)));
-
-    % Ветер
-%     if (t > 60 && t < 63)
-%         dual_Fu(8) = dual_Fu(8) + 2;
-%     end;
-
-%     dual_F = dual_F + dual_Fu';
+     
+% dual_F = dual_F + dual_Fu';
 
 %     [wy wz wx] = dq_get_rotation_euler(dual_Fu');
 %     fu         = dq_get_translation_vector(dual_Fu')
 %     dual_F = dual_F + [0 wx wy wz 0 fu(1) fu(2) fu(3)];
 
-%     dual_F = dual_F + [0 dual_Fu(2) dual_Fu(3) dual_Fu(4)  0 dual_Fu(6) dual_Fu(7) dual_Fu(8)];
+%         dual_F = dual_F + [0 dual_Fu(2) dual_Fu(3) dual_Fu(4)  0 dual_Fu(6) dual_Fu(7) dual_Fu(8)];
 
+%         if (t > 10 && t < 13)
+%               dual_Fu(8) = dual_Fu(8) + 2;
+%           end;
 
     dual_F = dual_F + [0 dual_Fu(2) dual_Fu(3) dual_Fu(4)  0 dual_Fu(6) dual_Fu(7) dual_Fu(8)];
 end
@@ -370,12 +341,12 @@ end
 %       'M:',     char(9), num2str(M, '%10.2f'), char(9), char(9), ...
 
 disp([num2str(t, '%10.2f:'), char(9), ...
-      'V:',     char(9), num2str(V, '%10.2f'), char(9), ...
-      'r:',     char(9), num2str(r, '%10.2f'), char(9), char(9), ...
       'omega',  char(9), num2str(rad2deg(omega), '%10.2f'), char(9), ...
       'psi, theta, gamma:', char(9), num2str(rad2deg(psi), '%10.2f'), ' ', ... 
                                      num2str(rad2deg(theta), '%10.2f'), ' ', ...
                                      num2str(rad2deg(gamma), '%10.2f'), char(9), ...
+      'V:',     char(9), num2str(V, '%10.2f'), char(9), ...
+      'r:',     char(9), num2str(r, '%10.2f'), char(9), char(9), ...
       'engine:',char(9), num2str(Fp(1:2), '%10.2f'), char(9), char(9)] ...
   );
 
