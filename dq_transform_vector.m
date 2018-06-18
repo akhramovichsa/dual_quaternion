@@ -6,10 +6,10 @@ function vector_out = dq_transform_vector(pos, dq)
 % dual_vector_out = dualquat_multiply(dq1, dualquat_conj(dq));
 
 % working
-dual_vector = [0 0 0 0  0 pos];
-dq1 = dq_multiply(dq_conj(dq), dual_vector);
+dual_vector     = [0; 0; 0; 0;  0; pos];
+dq1             = dq_multiply(dq_conj(dq), dual_vector);
 dual_vector_out = dq_multiply(dq1, dq);
-vector_out = dual_vector_out(6:8);
+vector_out      = dual_vector_out(6:8);
 
 % working
 % see http://dev.theomader.com/dual-quaternion-skinning/

@@ -9,7 +9,7 @@ q1_dual = dq_get_dual(dq1);
 q2_real = dq_get_real(dq2);
 q2_dual = dq_get_dual(dq2);
 
-dq_out = [quatcross(q1_real, q2_real), quatcross(q1_real, q2_dual) + quatcross(q1_dual, q2_real)];
+dq_out = [quatcross(q1_real, q2_real); quatcross(q1_real, q2_dual) + quatcross(q1_dual, q2_real)];
 
 % next arguments
 nVarargs = length(varargin);
@@ -19,7 +19,7 @@ for k = 1:nVarargs
     q2_real = dq_get_real(varargin{k});
     q2_dual = dq_get_dual(varargin{k});
     
-    dq_out = [quatcross(q1_real, q2_real), quatcross(q1_real, q2_dual) + quatcross(q1_dual, q2_real)];
+    dq_out = [quatcross(q1_real, q2_real); quatcross(q1_real, q2_dual) + quatcross(q1_dual, q2_real)];
 end
 
 % dq_out = [quatcross(q1_real, q2_real), quatcross(q1_real, q2_dual)];
@@ -32,5 +32,5 @@ function q_out = quatcross(q, p)
 
 % q_out = 0.5*(quatmultiply(q, p) - quatmultiply(p, q));
 
-q_out = [0 q(1)*p(2:4) + p(1)*q(2:4) + cross(q(2:4), p(2:4))];
+q_out = [0; q(1)*p(2:4) + p(1)*q(2:4) + cross(q(2:4), p(2:4))];
 end
