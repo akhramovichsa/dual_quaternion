@@ -24,12 +24,12 @@ omega_z = deg2rad(0);
 
 
 % Перевод в бикватернионную форму
-dual_omega = [0 omega_x omega_y omega_z  0 Vx Vy Vz];                  % Начальная углоавя и линейная скорости
-dual_q     = dq_from_euler_translation([gamma psi theta], [rx ry rz]); % Начальное ориентация и положение ЛА
+dual_omega = [0; omega_x; omega_y; omega_z;  0; Vx; Vy; Vz];                  % Начальная углоавя и линейная скорости
+dual_q     = dq_from_euler_translation([gamma; psi; theta], [rx; ry; rz]); % Начальное ориентация и положение ЛА
 
 % Интегрирование системы
-options = odeset('RelTol',2e-2);
-[t, x] = ode45(@dx_dt, [0:0.5:30], [dual_omega, dual_q], options);
+options = odeset('RelTol', 1e-2);
+[t, x] = ode45(@dx_dt, [0:0.5:15], [dual_omega, dual_q], options);
 
 d_omega = x(:, 1:8);
 d_q     = x(:, 9:16);
@@ -46,11 +46,10 @@ xlabel('\it r_x ,  м');
 ylabel('\it r_z ,  м');
 zlabel('\it r_y ,  м');
 for i = 1:1:length(d_q)
-    r                 = dq_get_translation_vector(d_q(i,:)); % Положение центра масс
+    r                 = dq_get_translation_vector(d_q(i,:)'); % Положение центра масс
     rr(i, :) = r;
-    [psi theta gamma] = dq_get_rotation_euler(d_q(i,:));     % Ориентация ЛА
+    [psi, theta, gamma] = dq_get_rotation_euler(d_q(i,:)');     % Ориентация ЛА
     phi(i,:) = [gamma psi theta];
-    
     
     % plot(r(1), r(2), 'o');
     plot3(r(1), r(3), r(2), 'k.'); % , LineStyle, '--', LineWidth, 1.0);
@@ -78,14 +77,14 @@ end
 end
 
 function dx_dt = dx_dt(t, x)
-dual_omega = x(1:8)';  % Бикватернион угловой и линейной скоростей
-dual_q     = x(9:16)'; % Бикватернион положения ЛА вокруг центра масс и центра масс
+dual_omega = x(1:8);  % Бикватернион угловой и линейной скоростей
+dual_q     = x(9:16); % Бикватернион положения ЛА вокруг центра масс и центра масс
 
 omega = dual_omega(2:4); % Угловая скорость, [рад/с]
 V     = dual_omega(6:8); % Линейная скорость, [м/с]
 
 % ppsi = rad2deg(atan(2*(dual_q(1)*dual_q(3) - dual_q(2)*dual_q(4)/quatnorm(dual_q(1:4)))))
-[ psi theta gamma] = dq_get_rotation_euler(dual_q);     % Углы ориентации, [рад]
+[psi theta gamma] = dq_get_rotation_euler(dual_q);     % Углы ориентации, [рад]
 r                 = dq_get_translation_vector(dual_q); % Радиус-вектор положения ЛА, [м]
 
 % Константы и характеристики ЛА
@@ -98,11 +97,27 @@ ba     = 1;     % САХ
 Jzz    = 0.37;  % При массе ПН 1 кг, 2 метра под крылом    % Момент инерции вокруг оси OZ
 ly     = -0.1;  % Точка положения двигателя тяги относительно центра масс ЛА по оси OY, [м]
 
+% -------------------------------------------------------------------------
+% Ветер и турбулентность
+% -------------------------------------------------------------------------
+W_0_nsk = [0.0; 0.0; 0.0]; % Направления: [юг->север; снизу->вверх; запад->восток]
+W_0     = nsk2ssk(gamma, psi, theta)*W_0_nsk;
+s = rng;
+W_tur   = [0.0; 0.0; 0*3*sin(t)];
+
+% W_tur_delta_x = 1.06;
+% W_tur_Lx      = 200;
+% Hx_sys = tf([W_tur_delta_x*sqrt(2*(V(1)-W_0(1))/W_tur_Lx)], [1, (V(1)-W_0(1))/W_tur_Lx])
+
+W = W_0 + W_tur;
+
 % Дополнительные параметры
-V_norm     = sqrt(V(1)^2 + V(2)^2 + V(3)^2); % Воздушная скорость, [м/с]
-q     = (rho*V_norm^2)/2;                    % Скоростной напор, [кг/(м*с^2)]
-alpha = atan(-V(2)/V(1));               % Угол атаки, [рад]
-betta = asin(V(3)/V_norm);                  % Угол скольжения, [рад]
+Va      = V - W;                             % Вектор воздушнной скорости, [м/с]
+Va_norm = sqrt(Va(1)^2 + Va(2)^2 + Va(3)^2); % Воздушная скорость, [м/с]
+q       = (rho*Va_norm^2)/2;                 % Скоростной напор, [кг/(м*с^2)]
+alpha   = atan(-Va(2)/Va(1));                % Угол атаки, [рад]
+betta   = asin(Va(3)/Va_norm);               % Угол скольжения, [рад]
+
 
 % if (abs(alpha) > deg2rad(20))
 %     disp('ERROR: alpha > +-20')
@@ -146,9 +161,9 @@ delta_left  = deg2rad(0.0); % Угол отклонения левого руля, [рад]
 delta_right = deg2rad(0.0); % Угол отклонения правого руля, [рад]
 
 % Управляющие воздействия вокруг по каждой из осей, [рад]
-delta_x = 0.5*(delta_left - delta_right);
+delta_x = 0.5*(delta_left  - delta_right);
 delta_y = 0.5*(delta_right - delta_left);
-delta_z = 0.5*(delta_left + delta_right);
+delta_z = 0.5*(delta_left  + delta_right);
 
 % Аэродинамические коэфициенты
 cx_alpha_0 = 0.008;
@@ -184,31 +199,31 @@ mx = mx_betta_0 + mx_betta*betta + mx_delta*delta_x;
 my = my_betta_0 + my_betta*betta + my_delta*delta_y;
 mz = mz_alpha_0 + mz_alpha*alpha + mz_delta*delta_z; % + mz_alpha_2*alpha^2 ;
 
-Fa_pssk = [-cx cy cz]*q*S;          % вектор аэродинамической силы в ПССК
+Fa_pssk = [-cx; cy; cz]*q*S;          % вектор аэродинамической силы в ПССК
 
-Fa = Fa_pssk*pssk2ssk(alpha, betta);  % перевод в ССК
-Ma =  [mx my mz]*q*ba*S;              % момент в ПССК
+Fa = pssk2ssk(alpha, betta)*Fa_pssk;  % перевод в ССК
+Ma =  [mx; my; mz]*q*ba*S;            % момент в ПССК
 
-[t Fa rad2deg(alpha) rad2deg(betta) mz];
+% [t Fa rad2deg(alpha) rad2deg(betta) mz];
 
 % -------------------------------------------------------------------------
 % Сила тяжести
 % -------------------------------------------------------------------------
-Fg_nsk = [0 -mass*g 0];
-Fg     = Fg_nsk*nsk2ssk(gamma, psi, theta);
+Fg_nsk = [0; -mass*g; 0];
+Fg     = nsk2ssk(gamma, psi, theta)*Fg_nsk;
 
 % -------------------------------------------------------------------------
 % Сила и момент тяги двигателя
 % -------------------------------------------------------------------------
-Rp      = [-0.1 -0.2 0.0];       % точка приложения силы в ССК
-Rp_matr = [0 -Rp(3) Rp(2); Rp(3) 0 -Rp(1); -Rp(2) Rp(1) 0]; % Точка приложения силы в матричном виде для векторного умножения
+Rp      = [-0.1; -0.2; 0.0];       % точка приложения силы в ССК
+% Rp_matr = [0 -Rp(3) Rp(2); Rp(3) 0 -Rp(1); -Rp(2) Rp(1) 0]; % Точка приложения силы в матричном виде для векторного умножения
 
 engine_thrust =  2.0; % 1000*(0 - theta) % + 0.5*(100 - r(2));
 
-Fp = [engine_thrust 0 0]; % сила ССК
+Fp = [engine_thrust; 0; 0]; % сила ССК
 Mp = cross(Rp, Fp);       % момент в ССК
 
-Mp = Mp + [0 -engine_thrust*0.01 0]; % Момент от винта
+Mp = Mp + [0; -engine_thrust*0.01; 0]; % Момент от винта
 % -------------------------------------------------------------------------
 % Тензор инерции
 % -------------------------------------------------------------------------
@@ -227,17 +242,17 @@ dual_J = [  Jq       zeros(4);
 % -------------------------------------------------------------------------
 % Сумма сил и моментов в бикватернионной форме
 % -------------------------------------------------------------------------
-F = [0 0 0];
+F = [0; 0; 0];
 F = F + Fg;
 F = F + Fa;
 F = F + Fp;
 
-M = [0 0 0];
+M = [0; 0; 0];
 M = M + Ma;
 M = M + Mp;
 
 % Моменты и силы в бикватернионной форме
-dual_F = [0 M 0 F];
+dual_F = [0; M; 0; F];
 
 disp([num2str(t, '%10.2f:'), char(9), ...
       'alpha:', char(9), num2str(rad2deg(alpha), '%10.2f'), char(9), ...
@@ -245,21 +260,21 @@ disp([num2str(t, '%10.2f:'), char(9), ...
       'psi, theta, gamma:', char(9), num2str(rad2deg(psi), '%10.2f'), ' ', ... 
                                      num2str(rad2deg(theta), '%10.2f'), ' ', ...
                                      num2str(rad2deg(gamma), '%10.2f'), char(9), ...
-      'F:',     char(9), num2str(F, '%10.2f'), char(9), ...
-      'M:',     char(9), num2str(M, '%10.2f'), char(9), char(9), ...
-      'V:',     char(9), num2str(V, '%10.2f'), char(9), ...
-      'r:',     char(9), num2str(r, '%10.2f'), char(9), char(9), ...
-      'engine:',char(9), num2str(Fp(1:2), '%10.2f'), char(9), char(9)] ...
+      'F:',     char(9), num2str(F', '%10.2f'), char(9), ...
+      'M:',     char(9), num2str(M', '%10.2f'), char(9), char(9), ...
+      'V:',     char(9), num2str(V', '%10.2f'), char(9), ...
+      'r:',     char(9), num2str(r', '%10.2f'), char(9), char(9), ...
+      'engine:',char(9), num2str(Fp(1:2)', '%10.2f'), char(9), char(9)] ...
   );
 
 % -------------------------------------------------------------------------
 % Уравнения движения
 % -------------------------------------------------------------------------
-d_dual_omega_dt = dual_J\dual_F' - dual_J\dq_cross([dual_omega(1:4) 0 0 0 0], (dual_J*dual_omega')')'; 
+d_dual_omega_dt = dual_J \ (dual_F - dq_cross([dual_omega(1:4); 0; 0; 0; 0], (dual_J*dual_omega))); 
 d_dual_q_dt     = 0.5*dq_multiply(dual_q, dual_omega);
 
 
-dx_dt = [d_dual_omega_dt; d_dual_q_dt'];
+dx_dt = [d_dual_omega_dt; d_dual_q_dt];
 
 end
 
