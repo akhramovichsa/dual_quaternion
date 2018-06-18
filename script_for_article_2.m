@@ -118,7 +118,6 @@ q       = (rho*Va_norm^2)/2;                 % Ñêîğîñòíîé íàïîğ, [êã/(ì*ñ^2)]
 alpha   = atan(-Va(2)/Va(1));                % Óãîë àòàêè, [ğàä]
 betta   = asin(Va(3)/Va_norm);               % Óãîë ñêîëüæåíèÿ, [ğàä]
 
-
 % if (abs(alpha) > deg2rad(20))
 %     disp('ERROR: alpha > +-20')
 %     return
