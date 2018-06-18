@@ -7,5 +7,5 @@ function M = pssk2ssk(alpha, betta)
 
     M = [ ca*cb sa -ca*sb;
          -sa*cb ca  sa*sb;
-          sb     0  cb]';
+          sb     0  cb];
 end
