@@ -55,7 +55,7 @@ tr = dq_get_translation_vector(dq_mul)
 [r1, r2, r3] = dq_get_rotation_euler(dq_mul);
 rad2deg([r1, r2, r3])
 
-%check: dq_normalize ???????????
+%check: dq_normalize ????????
 display('CHECK: dq_normalize');
 dq1 = dq_from_euler_translation(deg2rad([0 0 0]), [100 0 0]);
 dq2 = dq_from_euler_translation(deg2rad([150 0 0]), [0 0 0]);
