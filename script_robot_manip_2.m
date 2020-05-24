@@ -4,13 +4,13 @@
 clc; clear all;
 
 % Шарнир в столе, не имеет плеча, может вращаться от 0 до 180 градусов вокруг оси Z
-q0 = dq_from_euler_translation(deg2rad([0, 0, 0]), [0 0 0])
+q0 = dq_from_euler_translation(deg2rad([0; 0; 0]), [0; 0; 0])
 
 % Плечо первого звена с шарниром на конце, может вращаться от 0 до 180 градусов вокруг оси Z
-q1 = dq_from_euler_translation(deg2rad([0, 0, 0]), [1 0 0])
+q1 = dq_from_euler_translation(deg2rad([0; 0; 0]), [1; 0; 0])
 
 % Плечо второго звена без шарнира на конце, не вращается
-q2 = dq_from_euler_translation(deg2rad([0, 0, 0]), [1 0 0])
+q2 = dq_from_euler_translation(deg2rad([0; 0; 0]), [1; 0; 0])
 
 
 % Начальное положение: q0*q1*q2
@@ -21,10 +21,10 @@ dq_get_translation_vector(q_start)
 
 
 % Конечное положение
-q_finish = dq_from_euler_translation(deg2rad([0, 0, 0]), [0 1.5 0])
+q_finish = dq_from_euler_translation(deg2rad([0; 0; 0]), [0.1; 1.5; 0])
 
 % Метод покоординатного спуска
-q_h_z = dq_from_euler_translation(deg2rad([0, 0, 0.2]), [0 0 0]);   % Шаг вращения вокруг оси Z
+q_h_z = dq_from_euler_translation(deg2rad([0; 0.2; 0]), [0; 0; 0]);   % Шаг вращения вокруг оси Z
 eps = 0.005;  % Точность
 i = 1;    % Счетик шагов
 i_max = 700; % Максимальное количество шагов

@@ -1,8 +1,8 @@
 clc; clear all;
 
-v0 = [0 0 0];
-q01 = dq_from_euler_translation(deg2rad([0, 0, 0]), [0 1 0])
-q12 = dq_from_euler_translation(deg2rad([0, 0, 0]), [1 0 0])
+v0 = [0; 0; 0];
+q01 = dq_from_euler_translation(deg2rad([0; 0; 0]), [0; 1; 0])
+q12 = dq_from_euler_translation(deg2rad([0; 0; 0]), [1; 0; 0])
 
 q1 = dq_multiply(q01, q12)
 
