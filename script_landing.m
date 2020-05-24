@@ -27,8 +27,8 @@ clc; clear all;
 
 % syms_equation();
 
-dual_omega = [0 deg2rad(0) deg2rad(0) deg2rad(0)  0 0 0 0];
-dual_q     = dq_from_euler_translation(deg2rad([0 0 0]), [0 100 0]);
+dual_omega = [0; deg2rad(0); deg2rad(0); deg2rad(0);  0; 0; 0; 0];
+dual_q     = dq_from_euler_translation(deg2rad([0; 0; 0]), [0; 100; 0]);
 
 
 options = odeset('RelTol',2e-10);
@@ -38,8 +38,8 @@ options = odeset('RelTol',2e-10);
 
 dq = x(:, 9:16);
 for i = 1:1:length(dq)
-    [r1 r2 r3] = dq_get_rotation_euler(dq(i, :));
-    [rad2deg([r1 r2 r3]), dq_get_translation_vector(dq(i, :))]
+    [r1 r2 r3] = dq_get_rotation_euler(dq(i, :)');
+    [rad2deg([r1; r2; r3]), dq_get_translation_vector(dq(i, :)')]
 end
 
 % figure(1);
@@ -57,8 +57,8 @@ end
 end
 
 function dx_dt = dx_dt(t, x)
-dual_omega = x(1:8)';
-dual_q     = x(9:16)';
+dual_omega = x(1:8);
+dual_q     = x(9:16);
 
 % dual_omega = [0 0 0 0  0 0 0 0];
 % dual_q     = x(1:8)';
@@ -66,12 +66,12 @@ dual_q     = x(9:16)';
 m = 10;
 g = 9.8;
 
-Fg_nsk = [0 -m*g 0];
+Fg_nsk = [0; -m*g; 0];
 Fg = dq_transform_vector(Fg_nsk, dual_q);
 
-dual_Fg = [0 0 0 0  0 Fg];
+dual_Fg = [0; 0; 0; 0;  0; Fg];
 
-dual_Fp = [0 0 0 0  0 0 0 0];
+dual_Fp = [0; 0; 0; 0;  0; 0; 0; 0];
 dual_F = dual_Fg + dual_Fp;
 
 Jq = [1  0   0  0;
@@ -88,8 +88,8 @@ dual_J = [Jq       zeros(4);
 
 % inv_dual_J = inv(dual_J);
 
-[dual_omega', (dual_J*dual_omega') dual_Fg'];
-dq_cross(dual_omega, (dual_J*dual_omega')' )';
+[dual_omega, (dual_J*dual_omega) dual_Fg];
+dq_cross(dual_omega, (dual_J*dual_omega) );
 
 r = dq_get_translation_vector(dual_q);
 v = dual_omega(6:8);
@@ -123,10 +123,10 @@ omega = dual_omega(2:4);
 % ----------------------------------- %
 % Dynamic 12-dof - working!!!
 % ----------------------------------- %
-d_dual_omega_dt = dual_J\dual_F' - dual_J\dq_cross([dual_omega(1:4) 0 0 0 0], (dual_J*dual_omega')')'; 
+d_dual_omega_dt = dual_J\dual_F - dual_J\dq_cross([dual_omega(1:4); 0; 0; 0; 0], (dual_J*dual_omega)); 
 d_dual_q_dt     = 0.5*dq_multiply(dual_q, dual_omega);
-quatmod(dual_q(1:4));
-dx_dt = [d_dual_omega_dt; d_dual_q_dt'];
+quatmod(dual_q(1:4)');
+dx_dt = [d_dual_omega_dt; d_dual_q_dt];
 
 end
 

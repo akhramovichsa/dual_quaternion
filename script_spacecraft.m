@@ -17,8 +17,8 @@ omega_y = deg2rad(0);
 omega_z = deg2rad(0);
 
 % Перевод в бикватернионную форму
-dual_omega = [0 omega_x omega_y omega_z  0 rv(4:6)'];                  % Начальная угловая и линейная скорости
-dual_q     = dq_from_euler_translation([psi theta gamma], rv(1:3)'); % Начальная ориентация и положение ЛА
+dual_omega = [0; omega_x; omega_y; omega_z;  0; rv(4:6)];                  % Начальная угловая и линейная скорости
+dual_q     = dq_from_euler_translation([psi; theta; gamma], rv(1:3)); % Начальная ориентация и положение ЛА
 
 % Интегрирование системы
 options = odeset('RelTol', 2e-6);
@@ -40,7 +40,7 @@ xlabel('\it r_x ,  м');
 ylabel('\it r_z ,  м');
 zlabel('\it r_y ,  м');
 for i = 1:1:length(d_q)
-    r                 = dq_get_translation_vector(d_q(i,:)); % Положение центра масс
+    r                 = dq_get_translation_vector(d_q(i,:)'); % Положение центра масс
     rr(i, :) = r;
     
     plot3(r(1), r(2), r(3), 'k.'); % , LineStyle, '--', LineWidth, 1.0);
@@ -61,8 +61,8 @@ end
 function dx_dt = dx_dt(t, x)
 global c;
 
-dual_omega = x(1:8)';  % Бикватернион угловой и линейной скоростей
-dual_q     = x(9:16)'; % Бикватернион положения ЛА вокруг центра масс и центра масс
+dual_omega = x(1:8);  % Бикватернион угловой и линейной скоростей
+dual_q     = x(9:16); % Бикватернион положения ЛА вокруг центра масс и центра масс
 
 omega = dual_omega(2:4); % Угловая скорость, [рад/с]
 V     = dual_omega(6:8); % Линейная скорость, [м/с]
@@ -99,15 +99,15 @@ Fg_nsk = -c.EARTH_MU*r/(norm(r)^3);
 % -------------------------------------------------------------------------
 % Сумма сил
 % -------------------------------------------------------------------------
-dual_F = [0 0 0 0 0 Fg_nsk];
+dual_F = [0; 0; 0; 0; 0; Fg_nsk];
 
 % -------------------------------------------------------------------------
 % Уравнения движения
 % -------------------------------------------------------------------------
-d_dual_omega_dt = dual_J\dual_F' - dual_J\dq_cross([dual_omega(1:4) 0 0 0 0], (dual_J*dual_omega')')'; 
+d_dual_omega_dt = dual_J\dual_F - dual_J\dq_cross([dual_omega(1:4); 0; 0; 0; 0], (dual_J*dual_omega)); 
 d_dual_q_dt     = 0.5*dq_multiply(dual_q, dual_omega);
 
-dx_dt = [d_dual_omega_dt; d_dual_q_dt'];
+dx_dt = [d_dual_omega_dt; d_dual_q_dt];
 
 
 end
